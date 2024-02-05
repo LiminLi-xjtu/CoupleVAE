@@ -7,7 +7,7 @@ CoupleVAE: a coupling variational autoencoders model for predicting perturbation
 
 Yahao Wu, Jing Liu, Songyan Liu, Yanni Xiao, Shuqin Zhang and Limin Li
 
-![image](https://github.com/LiminLi-xjtu/CoupleVAE/tree/master/img/couplevae_arch.png)
+![image](https://github.com/LiminLi-xjtu/CoupleVAE/blob/master/img/couplevae_arch.png)
 
     
 ## Getting Started
