@@ -3,7 +3,7 @@
 
 This is the official Implementation for our paper:
 
-CoupleVAE: a coupling variational autoencoders model for predicting perturbational single-cell RNA sequencing data
+CoupleVAE: coupled variational autoencoders for predicting perturbational single-cell RNA sequencing data
 
 Yahao Wu, Jing Liu, Songyan Liu, Yanni Xiao, Shuqin Zhang and Limin Li
 
