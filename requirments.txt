@@ -1,0 +1,9 @@
+anndata
+scanpy
+adjustText
+tensorflow
+numpy
+scipy
+pandas
+matplotlib
+seaborn
