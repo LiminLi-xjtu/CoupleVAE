@@ -6,7 +6,10 @@ import numpy as np
 import scanpy as sc
 from matplotlib import pyplot as plt
 from scipy import sparse
+from scipy.sparse import issparse
 from sklearn import preprocessing
+import torch
+from torch.utils.data import TensorDataset, DataLoader
 
 import couplevae
 
@@ -91,19 +94,7 @@ def training_data_provider(train_s, train_t):
 
 
 def balancer(adata, cell_type_key="condition", condition_key="celltype"):
-    """
-        Makes cell type population equal.
 
-
-        # Example
-        ```python
-        import couplevae
-        import anndata
-        train_data = anndata.read("./train_covid.h5ad")
-        train_ctrl = train_data[train_data.obs["condition"] == "control", :]
-        train_ctrl = balancer(train_ctrl)
-        ```
-    """
     class_names = np.unique(adata.obs[cell_type_key])
     class_pop = {}
     for cls in class_names:
@@ -149,7 +140,30 @@ def shuffle_data(adata, labels=None):
         return anndata.AnnData(x, obs=adata.obs)
 
 
+def load_h5ad_to_dataloader(data, condition_key, cell_type_key, 
+                            cell_type, ctrl_key, pert_key, device, batch_size=32, shuffle=False):
+    
 
+    data_c = data[(data.obs[condition_key]==ctrl_key)&(data.obs[cell_type_key]==cell_type)]  
+    data_p = data[(data.obs[condition_key]==pert_key)&(data.obs[cell_type_key]==cell_type)]
+    
+
+    if sparse.issparse(data_c.X):
+        data_c = data_c.X.A
+    else:
+        data_c = data_c.X
+    
+    if sparse.issparse(data_p.X):
+        data_p = data_p.X.A
+    else:
+        data_p = data_p.X
+        
+    adata_c = torch.tensor(data_c).float().to(device)
+    adata_p = torch.tensor(data_p).float().to(device)
+    
+    dataset = TensorDataset(adata_c, adata_p)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, drop_last=True)
+    return dataloader
 
 
 
