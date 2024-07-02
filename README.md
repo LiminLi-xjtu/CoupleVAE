@@ -1,7 +1,7 @@
 
 # CoupleVAE
 
-This is the official Implementation for our paper:
+This is a PyTorch implementation for our paper:
 
 CoupleVAE: coupled variational autoencoders for predicting perturbational single-cell RNA sequencing data
 
@@ -15,15 +15,15 @@ Yahao Wu, Jing Liu, Songyan Liu, Yanni Xiao, Shuqin Zhang and Limin Li
 To run the CoupleVAE you need following packages :
 ### `Requirements`
 
-    python                                               3.6 
-    anndata                                              0.7.4
-    scanpy                                               1.6.0
-    tensorflow                                           2.0.0
-    numpy                                                1.20.3
-    scipy                                                1.5.3
-    pandas                                               1.1.3
-    matplotlib                                           3.4.3
-    seaborn                                              0.11.2
+    python                                               3.11.0 
+    anndata                                              0.10.7
+    scanpy                                               1.9.2
+    torch                                                2.3.1
+    numpy                                                1.26.0
+    scipy                                                1.13.1
+    pandas                                               1.5.0
+    matplotlib                                           3.6.0
+    seaborn                                              0.13.2
     
 ## Installation
 
@@ -32,35 +32,68 @@ install the development version via pip:
 pip install git+https://github.com/LiminLi-XJTU/CoupleVAE.git
 ```
 
-## How to use it
+## Example
+The data utilize in CoupleVAE is in the h5ad format. If your data is in other format, please refer to Scanpy' or anndata's tutorial for how to create one.
 
+### Input
+The data input to CoupleVAE are better the normalized and scaled data, you can use follow codes for this purpose.
+```Python
+import scanpy as sc
+
+sc.pp.filter_genes(adata, min_counts=10)
+sc.pp.filter_cells(adata, min_counts=3)
+sc.pp.normalize_per_cell(adata)
+sc.pp.log1p(adata)
+sc.pp.scale(adata)
+```
+
+### How to use it
+The following is an example of the dataset COVID-19
 
 
 ```Python
-import couplevae
+from couplevae import *
 import scanpy as sc
 
+# Load Data
+train = sc.read(train_path)
+valid = sc.read(valid_path)
+test = sc.read(test_path) 
+
+cell_type = "Macrophages"
+condition_key = "condition"
+cell_type_key = "celltype"
+pert_key = "severe COVID-19"
+ctrl_key = "control"
+device = "cuda"
+
+trainloader = load_h5ad_to_dataloader(train, condition_key, cell_type_key, 
+                                    cell_type, ctrl_key, pert_key, device)
+validloader = load_h5ad_to_dataloader(valid, condition_key, cell_type_key, 
+                                    cell_type, ctrl_key, pert_key, device)
+
+test_adata_c = test[(test.obs[condition_key]==ctrl_key)&(test.obs[cell_type_key]==cell_type)]  
+test_adata_p = test[(test.obs[condition_key]==pert_key)&(test.obs[cell_type_key]==cell_type)]
+
 # Create Model
-train_ctrl = sc.read(data)
-train_pert = sc.read(data)
-network = couple.VAE(x_dimension=train_ctrl.X.shape[1],
+network = VAE(x_dimension=train.X.shape[1],
                      z_dimension=100,
                      alpha=0.00005,
+                     beta=0.00005,
                      dropout_rate=0.2,
                      learning_rate=0.001)
+trainer = Trainer(model=model, n_epochs=200)
                      
-# Training
-network.train(train_ctrl, train_pert, n_epochs=n_epochs, batch_size=batch_size)
+# Train
+trainer.train(train_loader=trainloader, valid_loader=validloader)
 
-# Testing
-pred, _ = network.predict(train_ctrl,
-                          test,
-                          conditions = {"ctrl": ctrl_key, "pert": pert_key},
-                          cell_type_key=cell_type_key,
-                          condition_key=condition_key,
-                          celltype_to_predict=cell_type,
-                          biased=True)
+# Test
+pred_adata = network.predict(test_adata_c, test_adata_p)
 ```
 Then you can complete the training process and get the predicted data.
 
-In order to reproduce paper results visit [here](https://drive.google.com/drive/folders/1VkKqwFd9AfVRG9E2ue8XZLBW1QUPq5Qb?usp=sharing)
+## Datasets
+You can download the preprocessed data [here](https://drive.google.com/drive/folders/1VkKqwFd9AfVRG9E2ue8XZLBW1QUPq5Qb)
+
+## Reproducing paper results
+In order to reproduce paper results visit [here](https://github.com/muxiaran6688/couplevae-re)
