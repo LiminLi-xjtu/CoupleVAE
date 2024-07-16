@@ -19,6 +19,8 @@ To run the CoupleVAE you need following packages :
     anndata                                              0.10.7
     scanpy                                               1.9.2
     torch                                                2.3.1
+    torchaudio                                           2.3.1
+    torchcision                                          0.18.1
     numpy                                                1.26.0
     scipy                                                1.13.1
     pandas                                               1.5.0
