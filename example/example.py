@@ -94,9 +94,6 @@ def reg_mean_plot(adata, condition_key, axis_keys, labels, path_to_save="./reg_m
     
 
 # Load Data
-train_path='/data/wuyahao/couplevae/train_covid.h5ad'
-valid_path='/data/wuyahao/couplevae/valid_covid.h5ad'
-test_path='/data/wuyahao/couplevae/test_covid.h5ad'
 train = sc.read(train_path)
 valid = sc.read(valid_path)
 test = sc.read(test_path) 
@@ -155,7 +152,6 @@ real_stim_adata = anndata.AnnData(test_adata_p.X,
                                   var={"var_names": test_adata_p.var_names})
 
 all_data = ctrl_adata.concatenate(pred_adata, real_stim_adata)
-# all_data.write_h5ad(f"./coupleVAE{data_name}_{cell_type}.h5ad")
 all_data.write_h5ad(f"./coupleVAE{data_name}_{cell_type}.h5ad")
 
 
