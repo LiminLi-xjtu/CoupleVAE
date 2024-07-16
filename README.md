@@ -97,8 +97,8 @@ pred = network.predict(test_adata_c, test_adata_p)
 ```
 Then you can complete the training process and get the predicted data.
 
+For more examples, refer to the folder ```/example/example.py ```
+
 ## Datasets
 You can download the preprocessed data [here](https://drive.google.com/drive/folders/1VkKqwFd9AfVRG9E2ue8XZLBW1QUPq5Qb)
 
-## Reproducing paper results
-In order to reproduce paper results visit [here](https://github.com/muxiaran6688/couplevae-re)
