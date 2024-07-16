@@ -64,6 +64,7 @@ train = sc.read(train_path)
 valid = sc.read(valid_path)
 test = sc.read(test_path) 
 
+data_name = "covid"
 cell_type = "Macrophages"
 condition_key = "condition"
 cell_type_key = "celltype"
@@ -80,19 +81,19 @@ test_adata_c = test[(test.obs[condition_key]==ctrl_key)&(test.obs[cell_type_key]
 test_adata_p = test[(test.obs[condition_key]==pert_key)&(test.obs[cell_type_key]==cell_type)]
 
 # Create Model
-network = VAE(x_dimension=train.X.shape[1],
-                     z_dimension=100,
-                     alpha=0.00005,
-                     beta=0.00005,
-                     dropout_rate=0.2,
-                     learning_rate=0.001)
-trainer = Trainer(model=model, n_epochs=200)
+network = VAE(x_dim=train.X.shape[1],
+              z_dim=200,
+              alpha=0.00005,
+              beta=0.05,
+              dropout_rate=0.1,
+              learning_rate=0.0001)
+trainer = Trainer(model=network, learning_rate=0.0001, n_epochs=200, patience=20, batch_size=32)
                      
 # Train
 trainer.train(train_loader=trainloader, valid_loader=validloader)
 
 # Test
-pred_adata = network.predict(test_adata_c, test_adata_p)
+pred = network.predict(test_adata_c, test_adata_p)
 ```
 Then you can complete the training process and get the predicted data.
 
