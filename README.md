@@ -5,7 +5,7 @@ This is a PyTorch implementation for our paper:
 
 CoupleVAE: coupled variational autoencoders for predicting perturbational single-cell RNA sequencing data
 
-Yahao Wu, Jing Liu, Songyan Liu, Yanni Xiao, Shuqin Zhang and Limin Li
+Yahao Wu, Jing Liu, Yanni Xiao, Shuqin Zhang and Limin Li
 
 ![image](https://github.com/LiminLi-xjtu/CoupleVAE/blob/master/img/couplevae_arch.png)
 
