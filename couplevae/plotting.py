@@ -1,12 +1,10 @@
 import os
 import numpy as np
 import scanpy as sc
-from matplotlib import pyplot
 import pandas as pd
 from scipy import stats, sparse
 from adjustText import adjust_text
 import matplotlib
-from matplotlib import pyplot
 import matplotlib.pyplot as plt
 font = {'family' : 'Arial',
         # 'weight' : 'bold',
@@ -183,74 +181,86 @@ def gene_number_barplot(df, cat, subcat, val, filename, title=None, fontsize=14,
     
     
     
-def reg_mean_plot(adata, condition_key, axis_keys, labels, path_to_save="./reg_mean.pdf", gene_list=None, top_100_genes=None,
-                  show=False,
-                  legend=True, title=None,
-                  x_coeff=0.30, y_coeff=0.8, fontsize=14, **kwargs):
+def plot_gene_correlation(data, cond_col, axes_map, label_map, file_path='./output_plot.pdf', 
+                          genes_of_interest=None, top_genes=None, show_plot=False, include_legend=True, 
+                          plot_title='', x_offset=0.3, y_offset=0.8, text_size=14):
+    from scipy.sparse import issparse                              
+    # Check if optional parameters were passed and set default values
+    if genes_of_interest is None:
+        genes_of_interest = []
+    if top_genes is None:
+        top_genes = []
 
-    import seaborn as sns
-    sns.set()
-    sns.set(color_codes=True)
-    if sparse.issparse(adata.X):
-        adata.X = adata.X.A
-    diff_genes = top_100_genes
-    stim = adata[adata.obs[condition_key] == axis_keys["y"]]
-    ctrl = adata[adata.obs[condition_key] == axis_keys["x"]]
-    if diff_genes is not None:
-        if hasattr(diff_genes, "tolist"):
-            diff_genes = diff_genes.tolist()
-        adata_diff = adata[:, diff_genes]
-        stim_diff = adata_diff[adata_diff.obs[condition_key] == axis_keys["y"]]
-        ctrl_diff = adata_diff[adata_diff.obs[condition_key] == axis_keys["x"]]
-        x_diff = np.average(ctrl_diff.X, axis=0)
-        y_diff = np.average(stim_diff.X, axis=0)
-        m, b, r_value_diff, p_value_diff, std_err_diff = stats.linregress(x_diff, y_diff)
-        print(r_value_diff ** 2)
-    if "y1" in axis_keys.keys():
-        real_stim = adata[adata.obs[condition_key] == axis_keys["y1"]]
-    x = np.average(ctrl.X, axis=0)
-    y = np.average(stim.X, axis=0)
-    m, b, r_value, p_value, std_err = stats.linregress(x, y)
-    print(r_value ** 2)
-    df = pd.DataFrame({axis_keys["x"]: x, axis_keys["y"]: y})
-    ax = sns.regplot(x=axis_keys["x"], y=axis_keys["y"], data=df, scatter_kws={'rasterized': True})
-    ax.tick_params(labelsize=fontsize)
-    if "range" in kwargs:
-        start, stop, step = kwargs.get("range")
-        ax.set_xticks(np.arange(start, stop, step))
-        ax.set_yticks(np.arange(start, stop, step))
-    # _p1 = pyplot.scatter(x, y, marker=".", label=f"{axis_keys['x']}-{axis_keys['y']}")
-    # pyplot.plot(x, m * x + b, "-", color="green")
-    ax.set_xlabel(labels["x"], fontsize=fontsize)
-    ax.set_ylabel(labels["y"], fontsize=fontsize)
-    # if "y1" in axis_keys.keys():
-        # y1 = np.average(real_stim.X, axis=0)
-        # _p2 = pyplot.scatter(x, y1, marker="*", c="red", alpha=.5, label=f"{axis_keys['x']}-{axis_keys['y1']}")
-    if gene_list is not None:
+    # Convert sparse matrix to dense matrix
+    if issparse(data.X):
+        data.X = data.X.toarray()
+
+    # Retrieve groups of cells based on the condition
+    group_y = data[data.obs[cond_col] == axes_map['y'], :]
+    group_x = data[data.obs[cond_col] == axes_map['x'], :]
+
+    # If top_genes are provided, handle the differential gene part
+    if len(top_genes) > 0:
+        subset_data_x = group_x[:, top_genes].X
+        subset_data_y = group_y[:, top_genes].X
+
+        avg_x_genes = np.mean(subset_data_x, axis=0)
+        avg_y_genes = np.mean(subset_data_y, axis=0)
+
+        # Calculate R² value
+        r_squared_top = np.corrcoef(avg_x_genes, avg_y_genes)[0, 1] ** 2
+        print(f'R-squared for top genes: {r_squared_top:.2f}')
+
+    # Compute the average expression for all genes
+    avg_x = np.mean(group_x.X, axis=0)
+    avg_y = np.mean(group_y.X, axis=0)
+
+    # Calculate R² value
+    r_squared_all = np.corrcoef(avg_x, avg_y)[0, 1] ** 2
+    print(f'R-squared for all genes: {r_squared_all:.2f}')
+
+    # Create a DataFrame with x and y data
+    df = pd.DataFrame({label_map['x']: avg_x, label_map['y']: avg_y})
+
+    # Create a scatter plot and use sns.regplot to draw the regression line
+    plt.figure()
+    ax = sns.regplot(x=label_map['x'], y=label_map['y'], data=df, scatter_kws={'s': 10}, line_kws={'color': 'green'})
+    
+    plt.xlabel(label_map['x'], fontsize=text_size)
+    plt.ylabel(label_map['y'], fontsize=text_size)
+
+    # If a title is specified
+    if plot_title:
+        plt.title(plot_title, fontsize=text_size)
+
+    # If specific genes are provided, label them
+    if len(genes_of_interest) > 0:
         texts = []
-        for i in gene_list:
-            j = adata.var_names.tolist().index(i)
-            x_bar = x[j]
-            y_bar = y[j]
-            texts.append(pyplot.text(x_bar, y_bar , i, fontsize=11, color ="black"))
-            pyplot.plot(x_bar, y_bar, 'o', color="red", markersize=5)
-            # if "y1" in axis_keys.keys():
-                # y1_bar = y1[j]
-                # pyplot.text(x_bar, y1_bar, i, fontsize=11, color="black")
-    if gene_list is not None:
-        adjust_text(texts, x=x, y=y, arrowprops=dict(arrowstyle="->", color='grey', lw=0.5), force_points=(0.0, 0.0))
-    if legend:
-        pyplot.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    if title is None:
-        pyplot.title(f"", fontsize=fontsize)
-    else:
-        pyplot.title(title, fontsize=fontsize)
-    ax.text(max(x) - max(x) * x_coeff, max(y) - y_coeff * max(y), r'$\mathrm{R^2_{\mathrm{\mathsf{all\ genes}}}}$= ' + f"{r_value ** 2:.2f}", fontsize=kwargs.get("textsize", fontsize))
-    if diff_genes is not None:
-        ax.text(max(x) - max(x) * x_coeff, max(y) - (y_coeff+0.15) * max(y), r'$\mathrm{R^2_{\mathrm{\mathsf{top\ 100\ DEGs}}}}$= ' + f"{r_value_diff ** 2:.2f}", fontsize=kwargs.get("textsize", fontsize))
-    pyplot.savefig(f"{path_to_save}", bbox_inches='tight', dpi=300)
-    if show:
-        pyplot.show()
-    pyplot.close()
+        for gene in genes_of_interest:
+            gene_idx = np.where(data.var_names == gene)[0][0]  # Find the gene index in var_names
+            x_pos = avg_x[gene_idx]
+            y_pos = avg_y[gene_idx]
+            texts.append(plt.text(x_pos, y_pos, gene, fontsize=10, color='black'))
+            plt.scatter(x_pos, y_pos, color='red', s=40)
+        adjust_text(texts, arrowprops=dict(arrowstyle="->", color='grey', lw=0.5))
 
+    # Display R² value
+    plt.text(max(avg_x) - max(avg_x) * x_offset, max(avg_y) - y_offset * max(avg_y),
+             r'$\mathrm{R^2_{\mathrm{\mathsf{all\ genes}}}}$='+ f"{r_squared_all:.2f}", fontsize=text_size)
 
+    if len(top_genes) > 0:
+        plt.text(max(avg_x) - max(avg_x) * x_offset, max(avg_y) - (y_offset + 0.15) * max(avg_y),
+                r'$\mathrm{R^2_{\mathrm{\mathsf{top\ 100\ DEGs}}}}$='+ f"{r_squared_top:.2f}", fontsize=text_size)
+
+    # Display legend if needed
+    if include_legend:
+        plt.legend(loc='best')
+
+    # Save the plot
+    plt.savefig(file_path, bbox_inches='tight', dpi=300)
+
+    # Show the plot if required
+    if show_plot:
+        plt.show()
+
+    plt.close()
