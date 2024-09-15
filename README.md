@@ -21,7 +21,7 @@ To run the CoupleVAE you need following packages :
     scanpy                                               1.9.2
     torch                                                2.3.1
     torchaudio                                           2.3.1
-    torchcision                                          0.18.1
+    torchvision                                          0.18.1
     numpy                                                1.26.0
     scipy                                                1.13.1
     sklearn                                              1.5.0
