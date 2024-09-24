@@ -38,8 +38,7 @@ def calc_R2(adata, cell_type, n_genes=6000, conditions=None, fraction=0.8, data_
             real_stim.X = real_stim.X.A
         x = np.average(pred_stim.X[pred_stim_idx], axis=0)
         y = np.average(real_stim.X[real_stim_idx], axis=0)
-        #x = np.average(pred_stim.X, axis=0)
-        #y = np.average(real_stim.X, axis=0)
+
         m, b, r_value, p_value, std_err = stats.linregress(x, y)
         r_values[0, i] = r_value ** 2
     return r_values.mean(), r_values.std()
@@ -85,10 +84,7 @@ def calc_R2_specific_model(adata, n_genes, conditions, cell_type, rank_gene_meth
 
 
 
-def autolabel(rects):
-    """
-    Attach a text label above each bar displaying its height
-    """
+def label(rects):
     for rect in rects:
         height = rect.get_height()
         plt.text(rect.get_x() + rect.get_width() / 2., 1.01 * height,
@@ -121,7 +117,7 @@ def grouped_barplot(df, cat, subcat, val, err, filename, title=None, fontsize=14
 #         dfc=pd.DataFrame({'x': x_pos + i/1.25, 'y': a[0]})
         plt.plot(x_pos + i/1.25, a.T, '.', color='black', alpha=0.5)
         if put_label:
-            autolabel(b)
+            label(b)
     
     plt.ylabel(r"$\mathrm{R^2}$", fontsize=25)
     plt.xticks(x_pos+offset, u, rotation=20)
@@ -163,7 +159,7 @@ def gene_number_barplot(df, cat, subcat, val, filename, title=None, fontsize=14,
 #         dfc=pd.DataFrame({'x': x_pos + i/1.25, 'y': a[0]})
 #        plt.plot(x_pos + i/1.25, a.T, '.', color='black', alpha=0.5)
         if put_label:
-            autolabel(b)
+            label(b)
     
     plt.ylabel(r"The Number of Genes", fontsize=25)
     plt.xticks(x_pos+offset, u, rotation=20)
