@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
-from .util import balancer, extractor, shuffle_data, load_h5ad_to_dataloader
+from .util import load_h5ad_to_dataloader
 
 class Encoderc(nn.Module):
     def __init__(self, input_dim, z_dim, dropout_rate):
