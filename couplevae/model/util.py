@@ -34,39 +34,6 @@ def train_test_split(adata, train_frac=0.8, test_frac=0.1):
 
 
 
-def balancer(adata, cell_type_key="condition", condition_key="celltype"):
-
-    class_names = np.unique(adata.obs[cell_type_key])
-    class_pop = {}
-    for cls in class_names:
-        class_pop[cls] = adata.copy()[adata.obs[cell_type_key] == cls].shape[0]
-    min_number = np.min(list(class_pop.values()))
-    all_data_x = []
-    all_data_label = []
-    all_data_condition = []
-    for cls in class_names:
-        temp = adata.copy()[adata.obs[cell_type_key] == cls]
-        index = np.random.choice(range(len(temp)), min_number)
-        if sparse.issparse(temp.X):
-            temp_x = temp.X.A[index]
-        else:
-            temp_x = temp.X[index]
-        all_data_x.append(temp_x)
-        temp_ct = np.repeat(cls, min_number)
-        all_data_label.append(temp_ct)
-        temp_cc = np.repeat(np.unique(temp.obs[condition_key]), min_number)
-        all_data_condition.append(temp_cc)
-    balanced_data = anndata.AnnData(np.concatenate(all_data_x),var={"var_names":adata.var_names})
-    balanced_data.obs[cell_type_key] = np.concatenate(all_data_label)
-    balanced_data.obs[condition_key] = np.concatenate(all_data_condition)
-    class_names = np.unique(balanced_data.obs[cell_type_key])
-    class_pop = {}
-    for cls in class_names:
-        class_pop[cls] = len(balanced_data[balanced_data.obs[cell_type_key] == cls])
-    return balanced_data
-
-
-
 def load_h5ad_to_dataloader(data, condition_key, cell_type_key, 
                             cell_type, ctrl_key, pert_key, device, batch_size=32, shuffle=False):
     
