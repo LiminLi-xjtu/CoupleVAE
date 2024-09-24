@@ -14,19 +14,6 @@ from torch.utils.data import TensorDataset, DataLoader
 import couplevae
 
 
-def data_remover(adata, remain_list, remove_list, cell_type_key, condition_key):
-
-    source_data = []
-    for i in remain_list:
-        source_data.append(extractor(adata, i, conditions={"ctrl": "control", "pert": "perturted"},
-                                     cell_type_key=cell_type_key, condition_key=condition_key)[3])
-    target_data = []
-    for i in remove_list:
-        target_data.append(extractor(adata, i, conditions={"ctrl": "control", "pert": "perturted"},
-                                     cell_type_key=cell_type_key, condition_key=condition_key)[1])
-    merged_data = training_data_provider(source_data, target_data)
-    merged_data.var_names = adata.var_names
-    return merged_data
 
 def train_test_split(adata, train_frac=0.8, test_frac=0.1):
     train_size = int(adata.shape[0] * train_frac)
@@ -43,54 +30,8 @@ def train_test_split(adata, train_frac=0.8, test_frac=0.1):
 
     return train_data, valid_data, test_data
 
-def extractor(data, cell_type, conditions, cell_type_key="celltype", condition_key="condition"):
-
-    cell_with_both_condition = data[data.obs[cell_type_key] == cell_type]
-    condtion_1 = data[(data.obs[cell_type_key] == cell_type) & (data.obs[condition_key] == conditions["ctrl"])]
-    condtion_2 = data[(data.obs[cell_type_key] == cell_type) & (data.obs[condition_key] == conditions["pert"])]
-    training = data[~((data.obs[cell_type_key] == cell_type) & (data.obs[condition_key] == conditions["pert"]))]
-    return [training, condtion_1, condtion_2, cell_with_both_condition]
 
 
-def training_data_provider(train_s, train_t):
-
-    train_s_X = []
-    train_s_diet = []
-    train_s_groups = []
-    for i in train_s:
-        train_s_X.append(i.X.A)
-        train_s_diet.append(i.obs["condition"].tolist())
-        train_s_groups.append(i.obs["celltype"].tolist())
-    train_s_X = np.concatenate(train_s_X)
-    temp = []
-    for i in train_s_diet:
-        temp = temp + i
-    train_s_diet = temp
-    temp = []
-    for i in train_s_groups:
-        temp = temp + i
-    train_s_groups = temp
-    train_t_X = []
-    train_t_diet = []
-    train_t_groups = []
-    for i in train_t:
-        train_t_X.append(i.X.A)
-        train_t_diet.append(i.obs["condition"].tolist())
-        train_t_groups.append(i.obs["celltype"].tolist())
-    temp = []
-    for i in train_t_diet:
-        temp = temp + i
-    train_t_diet = temp
-    temp = []
-    for i in train_t_groups:
-        temp = temp + i
-    train_t_groups = temp
-    train_t_X = np.concatenate(train_t_X)
-    train_real = np.concatenate([train_s_X, train_t_X])  # concat all
-    train_real = anndata.AnnData(train_real)
-    train_real.obs["condition"] = train_s_diet + train_t_diet
-    train_real.obs["celltype"] = train_s_groups + train_t_groups
-    return train_real
 
 
 def balancer(adata, cell_type_key="condition", condition_key="celltype"):
@@ -124,20 +65,6 @@ def balancer(adata, cell_type_key="condition", condition_key="celltype"):
         class_pop[cls] = len(balanced_data[balanced_data.obs[cell_type_key] == cls])
     return balanced_data
 
-def shuffle_data(adata, labels=None):
-
-    ind_list = [i for i in range(adata.shape[0])]
-    shuffle(ind_list)
-    if sparse.issparse(adata.X):
-        x = adata.X.A[ind_list, :]
-    else:
-        x = adata.X[ind_list, :]
-    if labels is not None:
-        labels = labels[ind_list]
-        adata = anndata.AnnData(x, obs={"labels": list(labels)})
-        return adata, labels
-    else:
-        return anndata.AnnData(x, obs=adata.obs)
 
 
 def load_h5ad_to_dataloader(data, condition_key, cell_type_key, 
